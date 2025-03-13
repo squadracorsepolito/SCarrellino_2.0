@@ -29,6 +29,8 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include "stdbool.h"
+#include "main.h"
 
 /* USER CODE END Includes */
 
@@ -38,6 +40,10 @@ extern CAN_HandleTypeDef hcan2;
 
 /* USER CODE BEGIN Private defines */
 
+
+  
+
+  
 /* USER CODE END Private defines */
 
 void MX_CAN1_Init(void);

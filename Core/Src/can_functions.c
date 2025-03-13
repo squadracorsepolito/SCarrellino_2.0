@@ -7,7 +7,7 @@ CAN high level functions
 #include "can_functions.h"
 
 #include "ECU_level_functions.h"
-#include "SW_Watchdog.h"
+#include "SW_Watchdog_V2.0.h"
 #include "can.h"
 #include "hvcb.h"
 #include "interrupt.h"
@@ -17,6 +17,10 @@ CAN high level functions
 #include "stdio.h"
 #include "string.h"
 #include "usart.h"
+
+
+
+
 
 //wait for the CAN Tx to be ready
 HAL_StatusTypeDef can_wait(CAN_HandleTypeDef *hcan, uint8_t timeout) {
@@ -37,6 +41,14 @@ HAL_StatusTypeDef can_send(CAN_HandleTypeDef *hcan, uint8_t *buffer, CAN_TxHeade
 
     return status;
 }
+
+HAL_StatusTypeDef can_messages_init(Signals_folderTypedef *folder){
+
+    memset(folder, 0, sizeof(Signals_folderTypedef));
+
+    return HAL_OK;
+}
+
 
 /*void can_send_msg(uint32_t id) {
     uint8_t buffer[8] = {0};
@@ -113,28 +125,27 @@ volatile extern uint8_t can_id;
  form the BRUSA CHARGER info about charging and mains voltage and current 
 
  */
-void can_rx_routine(void) {
-    if (can_rx_flag == 1) {
-        //if there is no data to store the flag gets cleared
-        if ((can_buffer[0].data_present == 0) && (can_buffer[1].data_present == 0) &&
-            (can_buffer[5].data_present == 0) && (can_buffer[2].data_present == 0) &&
-            (can_buffer[3].data_present == 0) && (can_buffer[4].data_present == 0))
-            can_rx_flag = 0;
+void can_rx_routine(Rx_CAN_Typedef *handle_canRx, Signals_folderTypedef *handle_canMessages, SW_Watchdog_HandleTypedef *handle_watchdog) {
+    
 
-#ifdef BRUSA_on
-        BRUSA_CAN_data_storage();
-#endif
+    #ifdef BRUSA_on
+    BRUSA_CAN_data_storage(&handle_canRx[HVCB_BRUSA_], &handle_canMessages, &hWD[HVCB_BRUSA_]); 
+    #endif
 
-        HV_BMS1_CAN_data_storage();
-        HV_BMS2_CAN_data_storage();
-#ifndef SOC_evaluation
-        HV_BMS3_CAN_data_storage();
-#endif
-        HV_BMS4_CAN_data_storage();
-        HV_BMS5_CAN_data_storage();
-        TLB_Battery_signals_CAN_data_storage();
-        TLB_Battery_SDC_CAN_data_storage();
-    }
+    HV_BMS1_CAN_data_storage(&handle_canRx[HVCB_HVB_RX_V_CELL_], &handle_canMessages, &handle_watchdog[HVCB_HVB_RX_V_CELL_]);
+    HV_BMS2_CAN_data_storage(&handle_canRx[HVCB_HVB_RX_T_CELL_], &handle_canMessages, &handle_watchdog[HVCB_HVB_RX_T_CELL_]);
+
+    #ifndef SOC_evaluation
+    HV_BMS3_CAN_data_storage(&handle_canRx[HVCB_HVB_RX_SOC_], &handle_canMessages, &hWD[HVCB_HVB_RX_SOC_]);
+    #endif
+
+    HV_BMS4_CAN_data_storage(&handle_canRx[HVCB_HVB_RX_MEASURE_], &handle_canMessages, &handle_watchdog[HVCB_HVB_RX_MEASURE_]);
+    HV_BMS5_CAN_data_storage(&handle_canRx[HVCB_HVB_RX_DIAGNOSIS_], &handle_canMessages, &handle_watchdog[HVCB_HVB_RX_DIAGNOSIS_]);
+    TLB_Battery_signals_CAN_data_storage(&handle_canRx[MCB_TLB_BAT_SIGNALS_STATUS_], &handle_canMessages, &handle_watchdog[MCB_TLB_BAT_SIGNALS_STATUS_]);
+    TLB_Battery_SDC_CAN_data_storage(&handle_canRx[MCB_TLB_BAT_SD_CSENSING_STATUS_], &handle_canMessages, &handle_watchdog[MCB_TLB_BAT_SD_CSENSING_STATUS_]);
+
+    return;
+    
 }
 
 #ifdef TEST
@@ -208,7 +219,7 @@ void can_tx_3() {
     double I_out = 10.5, V_out = 100.578;
 
     // brusa packing
-    memset(&brusa, 0, sizeof(brusa));
+    memset(brusa, 0, sizeof(nlg5_database_can_nlg5_act_i_t));
 
     brusa.nlg5_mc_act = nlg5_database_can_nlg5_act_i_nlg5_mc_act_encode(mains_i);
     brusa.nlg5_mv_act = nlg5_database_can_nlg5_act_i_nlg5_mv_act_encode(mains_v);
@@ -370,23 +381,4 @@ void AIR_CAN_Cmd_Off() {
     }
 }
 
-/**
- * @brief Starts all the the set watchdog
- */
-void can_WD_start() {
-    extern SW_Watchdog_Typedef HVCB_HVB_RX_V_CELL_FRAME, HVCB_HVB_RX_T_CELL_FRAME, HVCB_HVB_RX_SOC_FRAME,
-        MCB_TLB_BAT_SD_CSENSING_STATUS_FRAME, HVCB_HVB_RX_MEASURE_FRAME,HVCB_HVB_RX_DIAGNOSIS_FRAME, MCB_TLB_BAT_SIGNALS_STATUS_FRAME;
 
-    SW_Watchdog_start(&HVCB_HVB_RX_V_CELL_FRAME);
-    SW_Watchdog_start(&HVCB_HVB_RX_T_CELL_FRAME);
-    SW_Watchdog_start(&HVCB_HVB_RX_SOC_FRAME);
-    SW_Watchdog_start(&HVCB_HVB_RX_MEASURE_FRAME);
-
-#ifdef BRUSA
-    SW_Watchdog_start(&NLG5_DATABASE_CAN_NLG5_ACT_I_FRAME);
-#endif
-    SW_Watchdog_start(&MCB_TLB_BAT_SD_CSENSING_STATUS_FRAME);
-    SW_Watchdog_start(&MCB_TLB_BAT_SIGNALS_STATUS_FRAME);
-    SW_Watchdog_start(&HVCB_HVB_RX_DIAGNOSIS_FRAME);
-
-}

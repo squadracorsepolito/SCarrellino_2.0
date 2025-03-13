@@ -120,17 +120,15 @@ HAL_CAN_ConfigFilter(&HVCB_CAN_HANDLE, &filtriRx3);
 
  // attivazione interrupt Rx
 if (HAL_CAN_ActivateNotification(&HVCB_CAN_HANDLE, 
-    CAN_IT_RX_FIFO0_MSG_PENDING |
-    CAN_IT_RX_FIFO1_MSG_PENDING |
-    CAN_IT_ERROR_WARNING |
-    CAN_IT_ERROR_PASSIVE |
-    CAN_IT_BUSOFF |
-    CAN_IT_LAST_ERROR_CODE |
-    CAN_IT_ERROR |
-    CAN_IT_TX_MAILBOX_EMPTY
-  ) != HAL_OK)
+                                  CAN_IT_RX_FIFO0_MSG_PENDING |
+                                  CAN_IT_RX_FIFO1_MSG_PENDING |
+                                  CAN_IT_ERROR_WARNING |
+                                  CAN_IT_ERROR_PASSIVE |
+                                  CAN_IT_BUSOFF |
+                                  CAN_IT_LAST_ERROR_CODE |
+                                  CAN_IT_ERROR |
+                                  CAN_IT_TX_MAILBOX_EMPTY) != HAL_OK)
   {
-    HAL_UART_Transmit(&LOG_UART, (uint8_t *)"errore attivazione IT\n\r", strlen("errore attivazione IT\n\r"), 10);
     error_code = CAN_it_activation_error;
   }
 
@@ -171,6 +169,7 @@ void MX_CAN2_Init(void)
   {
     Error_Handler();
   }
+  
   /* USER CODE BEGIN CAN2_Init 2 */
   CAN_FilterTypeDef filtriRx1;
     filtriRx1.FilterActivation     = ENABLE;
@@ -207,17 +206,15 @@ HAL_CAN_ConfigFilter(&MCB_CAN_HANDLE, &filtriRx2);
 
   
 if (HAL_CAN_ActivateNotification(&MCB_CAN_HANDLE, 
-    CAN_IT_RX_FIFO1_MSG_PENDING |
-    CAN_IT_RX_FIFO0_MSG_PENDING |
-    CAN_IT_ERROR_WARNING |
-    CAN_IT_ERROR_PASSIVE |
-    CAN_IT_BUSOFF |
-    CAN_IT_LAST_ERROR_CODE |
-    CAN_IT_ERROR |
-    CAN_IT_TX_MAILBOX_EMPTY
-  ) != HAL_OK)
+                                  CAN_IT_RX_FIFO1_MSG_PENDING |
+                                  CAN_IT_RX_FIFO0_MSG_PENDING |
+                                  CAN_IT_ERROR_WARNING |
+                                  CAN_IT_ERROR_PASSIVE |
+                                  CAN_IT_BUSOFF |
+                                  CAN_IT_LAST_ERROR_CODE |
+                                  CAN_IT_ERROR |
+                                  CAN_IT_TX_MAILBOX_EMPTY) != HAL_OK)
   {
-    HAL_UART_Transmit(&LOG_UART, (uint8_t *)"errore attivazione IT brusa\n\r", strlen("errore attivazione IT brusa\n\r"), 10);
     error_code = CAN_it_activation_error;
 	  
   }
@@ -226,7 +223,7 @@ if (HAL_CAN_ActivateNotification(&MCB_CAN_HANDLE,
     error_code = CAN2_start_error;
    
   }
-  else( HAL_UART_Transmit(&LOG_UART, (uint8_t *)"\n\n\rCAN pronta\n\r", strlen("\n\n\rCAN pronta\n\r"), 100));
+  //else( HAL_UART_Transmit(&LOG_UART, (uint8_t *)"\n\n\rCAN pronta\n\r", strlen("\n\n\rCAN pronta\n\r"), 100));
 
 
 

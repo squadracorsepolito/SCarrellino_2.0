@@ -118,15 +118,26 @@ void Error_Handler(void);
 //#define debug
 //#define silence
 //#define BRUSA_on
-#define Watchdog
 //#define IMP_EN
+
+/**
+ * @defgroup Code section enables
+ * @brief Enables/disables some parts of the code
+ * @note Comment if you want to disable that part of the code
+ * @file main.h
+ */
+
+#define Watchdog
 #define TEMP_CHECK_EN
 #define air
 #define SOC_evaluation
 //#define Display
 
+//
 #define MCB_CAN_HANDLE hcan2
 #define HVCB_CAN_HANDLE hcan1
+
+
 
 #define SDC_active 1
 #define SDC_inactive 0

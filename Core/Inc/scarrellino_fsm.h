@@ -16,6 +16,8 @@
 
 void run_callback_1(uint32_t state);
 void transition_callback_1(uint32_t state);
+STMLIBS_StatusTypeDef _FSM_init(FSM_HandleTypeDef *hfsm);
+
 
 
 enum FSM_SCARRELLINO_FSM_StateEnum {

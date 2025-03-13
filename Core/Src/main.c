@@ -30,7 +30,7 @@
 /* USER CODE BEGIN Includes */
 #include "ECU_level_functions.h"
 #include "I2C_LCD.h"
-#include "SW_Watchdog.h"
+#include "SW_Watchdog_V2.0.h"
 #include "can_functions.h"
 #include "fsm.h"
 #include "hvcb.h"
@@ -50,11 +50,23 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// flag for the LCD library
-uint8_t raw = 0u;
+
+
 
 FSM_HandleTypeDef hfsm;
 
+Signals_folderTypedef hcan_messages;
+
+volatile Rx_CAN_Typedef hcan_rx[can_message_rx_number];
+
+//watchdog handle array
+SW_Watchdog_HandleTypedef hWD[number_of_watchdogs];
+
+volatile data_flagTypedef can_send_flag = Flag_Off;
+
+
+// flag for the LCD library
+uint8_t raw = 0u;
 uint8_t volatile error_code = 30;
 
 //flag to solve a timer problem
@@ -136,67 +148,68 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
-    I2C_LCD_Init(MyI2C_LCD);
+    
 
 
-    //HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
+  //HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
 
-    //timer for adc conversions
-    //HAL_TIM_OC_Start_IT(&htim4, TIM_CHANNEL_4);
-    //HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ntc_value, 1);
-    //can command TX
-    //HAL_TIM_Base_Start_IT(&htim6);
+  //timer for adc conversions
+  //HAL_TIM_OC_Start_IT(&htim4, TIM_CHANNEL_4);
+  //HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ntc_value, 1);
+  //can command TX
+  //HAL_TIM_Base_Start_IT(&htim6);
 
-    //fsm
-    uint8_t n_events = 0;
+  I2C_LCD_Init(MyI2C_LCD);
 
-    if (FSM_SCARRELLINO_FSM_init(&hfsm, n_events, run_callback_1, transition_callback_1) != STMLIBS_OK) {
-        error_code = init_fsm_error;
-    }
-    if (FSM_start(&hfsm) != STMLIBS_OK) {
-        error_code = fsm_start_error;
-    }
+  _FSM_init(&hfsm);
+  can_messages_init(&hcan_messages);
 
-#ifdef Watchdog
-    can_WD_set();
-    can_WD_start();
-#endif
+  
+  #ifdef Watchdog
+
+  can_WD_init(&hWD);
+  can_WD_start(&hWD);
+  
+  #endif
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    while (1) {
-      
-        can_rx_routine();
-        can_tx_routine();
-#ifdef SOC_evaluation
-        SOC_Evaluation(&v_min_rx, &SOC);
-#endif
-#ifdef Display
-        display_routine();
-#endif
-        IMD_AMS_error_handler();
-        buzzer_routine();
-        FSM_routine(&hfsm);
-        TSAC_FAN_routine(charge_temp);
+  while (1) {
+    
+    can_rx_routine(&hcan_rx, &hcan_messages, &hWD);
+    can_tx_routine(&can_send_flag);
+
+    #ifdef SOC_evaluation
+    SOC_Evaluation(&hcan_messages.SOC.hvb_r_so_c_hvb_u_cell_min, &SOC);
+    #endif
+
+    #ifdef Display
+    display_routine();
+    #endif
+
+    IMD_AMS_error_handler();
+    buzzer_routine();
+    FSM_routine(&hfsm);
+    TSAC_FAN_routine(charge_temp);
         
 
-#ifdef Watchdog
+    #ifdef Watchdog
 
-        if (start_can_flag == 1) {
-            if (SW_Watchdog_routine() != HAL_OK) {
-                extern double imd_err_is_active, ams_err_is_active;
-                uint8_t volatile extern index_error[number_of_struct];
+    if (start_can_flag == 1) {
+        if (can_WD_routine(&hWD) != HAL_OK) {
+            extern double imd_err_is_active, ams_err_is_active;
+            uint8_t volatile extern index_error[number_of_struct];
 
-                error_code = watch_dog_error;
+            error_code = watch_dog_error;
 
-                if (index_error[5] == true) {
-                    imd_err_is_active = 1;
-                    ams_err_is_active = 1;
-                }
+            if (index_error[5] == true) {
+                imd_err_is_active = 1;
+                ams_err_is_active = 1;
             }
         }
+    }
 #endif
 
     /* USER CODE END WHILE */

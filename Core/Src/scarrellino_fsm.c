@@ -24,6 +24,7 @@
 #define __weak __attribute__((weak))
 #endif  // __weak
 
+
 extern double charge_temp;
 extern double charging_curr;
 
@@ -36,6 +37,29 @@ bool volatile ChargeEN_fallingedge = 0;
 //flag to register the fungo pression
 bool volatile fungo_pressed = 0;
 
+void run_callback_1(uint32_t state) {
+    ((void)0U);
+}
+
+void transition_callback_1(uint32_t state) {
+    ((void)0U);
+}
+
+STMLIBS_StatusTypeDef _FSM_init(FSM_HandleTypeDef *hfsm){
+
+
+    uint8_t n_events = 0U;
+
+    if (FSM_SCARRELLINO_FSM_init(&hfsm, n_events, run_callback_1, transition_callback_1) != STMLIBS_OK) {
+        return STMLIBS_ERROR;
+    }
+    if (FSM_start(&hfsm) != STMLIBS_OK) {
+        return STMLIBS_ERROR;
+    }
+
+    return STMLIBS_OK;
+
+}
 
 
 
@@ -64,13 +88,7 @@ double air_neg_cmd_is_active, air_neg_is_closed, air_neg_stg_mech_state_signal_i
 extern volatile uint8_t ntc_temp;
 extern volatile uint16_t ntc_value;
 
-void run_callback_1(uint32_t state) {
-    ((void)0U);
-}
 
-void transition_callback_1(uint32_t state) {
-    ((void)0U);
-}
 
 // Private wrapper function signatures
 uint32_t _FSM_SCARRELLINO_FSM_IDLE_event_handle(uint8_t event);

@@ -1,4 +1,5 @@
-
+#ifndef  INTERRUPT_H
+#define INTERRUPT_H
 
 #include "interrupt.h"
 #include "adc.h"
@@ -28,6 +29,8 @@ bool volatile extern fungo_pressed;
 bool volatile extern ChargeEN_risingedge;
 bool volatile extern ChargeEN_fallingedge;
 
+extern volatile Rx_CAN_Typedef hcan_rx[can_message_rx_number];
+
 
 
 /**
@@ -56,23 +59,17 @@ volatile uint8_t can_id;
 //extern bool volatile can_rx_flag;
 
 
-//can_message can_buffer[can_message_rx_number];
-
-#ifdef BRUSA_on
-can_message can_buffer_brusa;
-#endif
-
 
 
 /** 
- * @brief callback RX in FIFO0
+ * @brief callback RX in FIFO0, 
  * receives the messages from PODIUM HV BMS (v_cell)                        
 */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
     if (hcan == &HVCB_CAN_HANDLE) {
 
-        HVCB_FIFO0_RX_routine();
+        HVCB_FIFO0_RX_routine(&hcan_rx);
         
     }
 }
@@ -85,13 +82,13 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
     if (hcan == &MCB_CAN_HANDLE) {
 
-        MCB_FIFO1_RX_routine();
+        MCB_FIFO1_RX_routine(&hcan_rx);
       
     }
 
     if (hcan == &HVCB_CAN_HANDLE) {
 
-        HVCB_FIFO1_RX_routine();
+        HVCB_FIFO1_RX_routine(&hcan_rx);
         
     }
 }
@@ -136,13 +133,15 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
     
-    extern volatile bool can_send_flag;
+    extern volatile data_flagTypedef can_send_flag;
 
     extern bool first_charge;
 
+    
+
     //IRQ to send via can every 100ms
     if (htim->Instance == TIM6) {
-        can_send_flag = 1;
+        can_send_flag = Flag_On;
     }
 
     
@@ -202,8 +201,7 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c){
 
 
 
-
-
+#endif
 
 
 
