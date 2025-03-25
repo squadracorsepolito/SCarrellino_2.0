@@ -21,8 +21,9 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-#include "ntc.h"
-volatile uint16_t ntc_value;
+
+/** @brief Value returned by the DMA conversion of the ADC */
+volatile uint16_t ADC_value = 0;
 
 /* USER CODE END 0 */
 
@@ -73,7 +74,7 @@ void MX_ADC1_Init(void)
   }
   /* USER CODE BEGIN ADC1_Init 2 */
 
-HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ntc_value, 1);
+HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ADC_value, 1);
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -118,9 +119,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 
     __HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
 
-    /* ADC1 interrupt Init */
-    HAL_NVIC_SetPriority(ADC_IRQn, 3, 0);
-    HAL_NVIC_EnableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
   /* USER CODE END ADC1_MspInit 1 */
@@ -145,9 +143,6 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(adcHandle->DMA_Handle);
-
-    /* ADC1 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(ADC_IRQn);
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 
   /* USER CODE END ADC1_MspDeInit 1 */

@@ -15,6 +15,7 @@
 
 #include "stdint.h"
 
+
 #define I2C_LCD_MAX	1	// Maximum Number of I2C_LCD Modules in Your Project
 #define I2C_LCD	0	// I2C_LCD Instance Number 1 (Add more if you need)
 

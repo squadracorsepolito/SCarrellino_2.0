@@ -12,7 +12,17 @@
 #ifndef FSM_SCARRELLINO_FSM_H
 #define FSM_SCARRELLINO_FSM_H
 
+#include "main.h"
+
 #include "fsm.h"
+#include "stdbool.h"
+#include "can_functions.h"
+
+/**
+ * @brief FSM handle
+ */
+FSM_HandleTypeDef hfsm;
+
 
 void run_callback_1(uint32_t state);
 void transition_callback_1(uint32_t state);
@@ -162,6 +172,7 @@ void FSM_SCARRELLINO_FSM_STOP_CHARGE_exit();
 
 
 typedef struct int_state_variable{
+
     double sdc_tsac_initial_in_is_active, 
            sdc_post_ams_imd_relay_is_active,
            sdc_tsac_final_in_is_active ,

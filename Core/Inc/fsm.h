@@ -20,8 +20,6 @@
 #include <inttypes.h>
 
 
-
-
 #define FSM_MAX_EVENTS 32
 
 typedef void (*FSM_void_function)(void);

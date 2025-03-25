@@ -1,52 +1,76 @@
-#include "main.h"
-#include "math.h"
-#include "stdbool.h"
-
-
-//costants for the temperature measure
-#define A       0.00335401643468053
-#define B       0.000256523550896126
-#define C       0.00000260597012072052
-#define D       0.000000063292612648746
-#define R25     10000
-
-#define ADC_Val     3.6
-#define Val         5
-#define Rpu         10000.0 
-#define adc_conv_bt 12
+#include "ntc.h"
 
 
 extern bool flag_ntc;
-volatile uint8_t ntc_temp;
+
+float adc_conv_bit(ADC_HandleTypeDef *handle){
+
+    switch (handle->Init.Resolution)   
+    {                       
+    case ADC_RESOLUTION12b:    
+        
+        return 12.0f;
+        break;
+    
+    case ADC_RESOLUTION10b:
+        
+        return 10.0f;
+        break;
+
+    case ADC_RESOLUTION8b:
+
+        return 8.0f;
+        break;
+    
+    case ADC_RESOLUTION6b:
+
+        return 6.0f;
+        break;
+    }
+}
 
 
-uint16_t get_resistance(uint16_t ntc_value){
-    float ntc_voltage = ADC_Val*(ntc_value/(pow(2,adc_conv_bt)));
+uint16_t get_resistance(uint16_t ADC_value){
+    
+    float ntc_voltage = ADC_Val*(ADC_value/(pow(2,adc_conv_bit(&hadc1))));
     float resistance = (ntc_voltage*Rpu)/(Val-ntc_voltage) + 3000;
-
     return resistance;
-};
+}
 
 
-uint8_t get_temperature(float resistance){
+uint16_t get_temperature(float resistance){
     float Temperature = 1/(A + B*(log(resistance/R25)) + C*(pow(log(resistance/R25),2)) + D*(pow(log(resistance/R25), 3)) ) - 273.15;
     
-    return (uint8_t) Temperature; 
-};
+    return (uint16_t) Temperature; 
+}
 
 
-uint8_t get_ntc_temperature(uint16_t ntc_value){
+uint16_t get_ntc_temperature(uint16_t ADC_value){
 
-    if(flag_ntc == 1){
+    uint16_t resistance = get_resistance(ADC_value);
+    uint16_t  temperature = get_temperature(resistance);
+    
+    return temperature;
 
-    uint16_t resistance = get_resistance(ntc_value);
-    uint8_t  temperature = get_temperature(resistance);
+}
 
-    ntc_temp = temperature;
+
+
+uint16_t temp_meas(ADC_value){
+
+    if((ADC_value < 0U) || (ADC_value > 100U)){
+        return NaN;
     }
 
-    return 0;
+    static uint16_t prev_value = 0U;
 
+    if(ADC_value != prev_value){
 
-};
+        prev_value = ADC_value;
+        return get_ntc_temperature(ADC_value);
+    }
+
+    return prev_value;
+
+}
 

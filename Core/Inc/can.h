@@ -29,8 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#include "stdbool.h"
-#include "main.h"
+#include "can_functions.h"
 
 /* USER CODE END Includes */
 

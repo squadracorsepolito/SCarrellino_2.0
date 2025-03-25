@@ -10,7 +10,13 @@
         "scarrellino_fsm.h": "c",
         "i2c_lcd_cfg.h": "c",
         "can.h": "c",
-        "ecu_level_functions.h": "c"
+        "ecu_level_functions.h": "c",
+        "main_routine.h": "c",
+        "i2c.h": "c",
+        "fsm.h": "c",
+        "soc_evaluation.h": "c",
+        "encoder.h": "c",
+        "callbacks.h": "c"
     },
     "cortex-debug.variableUseNaturalFormat": true,
     "cmake.sourceDirectory": "/home/davide/Scrivania/directory SC/SCarrellino/Drivers/CMSIS/DSP/Source/InterpolationFunctions"

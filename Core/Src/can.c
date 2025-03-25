@@ -22,16 +22,6 @@
 
 /* USER CODE BEGIN 0 */
 
-//   IRQ
-#include "usart.h"
-#include "string.h"
-#include "stdio.h"
-#include "mcb.h"
-#include "main.h"
-#include "nlg5_database_can.h"
-#include "can_functions.h"
-#include "hvcb.h"
-
 extern uint8_t volatile error_code;
 
 /* USER CODE END 0 */
@@ -169,7 +159,6 @@ void MX_CAN2_Init(void)
   {
     Error_Handler();
   }
-  
   /* USER CODE BEGIN CAN2_Init 2 */
   CAN_FilterTypeDef filtriRx1;
     filtriRx1.FilterActivation     = ENABLE;
@@ -268,9 +257,9 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     HAL_GPIO_Init(D_CAN2_TX_GPIO_Port, &GPIO_InitStruct);
 
     /* CAN1 interrupt Init */
-    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(CAN1_RX0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(CAN1_RX0_IRQn);
-    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(CAN1_RX1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(CAN1_RX1_IRQn);
     HAL_NVIC_SetPriority(CAN1_SCE_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(CAN1_SCE_IRQn);
@@ -310,9 +299,9 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* canHandle)
     HAL_GPIO_Init(R_CAN1_TX_GPIO_Port, &GPIO_InitStruct);
 
     /* CAN2 interrupt Init */
-    HAL_NVIC_SetPriority(CAN2_RX0_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(CAN2_RX0_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(CAN2_RX0_IRQn);
-    HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(CAN2_RX1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(CAN2_RX1_IRQn);
     HAL_NVIC_SetPriority(CAN2_SCE_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(CAN2_SCE_IRQn);

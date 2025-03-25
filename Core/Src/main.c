@@ -28,17 +28,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ECU_level_functions.h"
-#include "I2C_LCD.h"
-#include "SW_Watchdog_V2.0.h"
-#include "can_functions.h"
-#include "fsm.h"
-#include "hvcb.h"
-#include "mcb.h"
-#include "ntc.h"
-#include "scarrellino_fsm.h"
-#include "string.h"
-#include "SOC_Evaluation.h"
 
 /* USER CODE END Includes */
 
@@ -51,34 +40,15 @@
 /* USER CODE BEGIN PD */
 
 
-
-
-FSM_HandleTypeDef hfsm;
-
-Signals_folderTypedef hcan_messages;
-
-volatile Rx_CAN_Typedef hcan_rx[can_message_rx_number];
-
-//watchdog handle array
-SW_Watchdog_HandleTypedef hWD[number_of_watchdogs];
-
-volatile data_flagTypedef can_send_flag = Flag_Off;
-
-
 // flag for the LCD library
 uint8_t raw = 0u;
-uint8_t volatile error_code = 30;
 
 //flag to solve a timer problem
 uint8_t first_charge = 1;
 
-//flag to start the watchdog
-uint8_t start_can_flag = 0;
 
 //Flag to know if it is the first code run to check if the CmdEn is still on
 uint8_t first_run = 1;
-
-double extern SOC, charge_temp, v_min_rx;
 
 
 /* USER CODE END PD */
@@ -148,29 +118,15 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
-    
-
-
   //HAL_TIM_Encoder_Start_IT(&htim3, TIM_CHANNEL_ALL);
 
   //timer for adc conversions
   //HAL_TIM_OC_Start_IT(&htim4, TIM_CHANNEL_4);
-  //HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ntc_value, 1);
+  //HAL_ADC_Start_DMA(&hadc1, (uint32_t *) &ADC_value, 1);
   //can command TX
   //HAL_TIM_Base_Start_IT(&htim6);
 
-  I2C_LCD_Init(MyI2C_LCD);
-
-  _FSM_init(&hfsm);
-  can_messages_init(&hcan_messages);
-
-  
-  #ifdef Watchdog
-
-  can_WD_init(&hWD);
-  can_WD_start(&hWD);
-  
-  #endif
+  System_init();
 
   /* USER CODE END 2 */
 
@@ -178,39 +134,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1) {
     
-    can_rx_routine(&hcan_rx, &hcan_messages, &hWD);
-    can_tx_routine(&can_send_flag);
+    can_routine();
 
-    #ifdef SOC_evaluation
-    SOC_Evaluation(&hcan_messages.SOC.hvb_r_so_c_hvb_u_cell_min, &SOC);
-    #endif
+    charge_control_routine();
+
 
     #ifdef Display
-    display_routine();
+    HMI_routine();
     #endif
 
-    IMD_AMS_error_handler();
-    buzzer_routine();
-    FSM_routine(&hfsm);
-    TSAC_FAN_routine(charge_temp);
-        
-
     #ifdef Watchdog
-
-    if (start_can_flag == 1) {
-        if (can_WD_routine(&hWD) != HAL_OK) {
-            extern double imd_err_is_active, ams_err_is_active;
-            uint8_t volatile extern index_error[number_of_struct];
-
-            error_code = watch_dog_error;
-
-            if (index_error[5] == true) {
-                imd_err_is_active = 1;
-                ams_err_is_active = 1;
-            }
-        }
-    }
-#endif
+    watchdog_routine();
+    #endif
 
     /* USER CODE END WHILE */
 

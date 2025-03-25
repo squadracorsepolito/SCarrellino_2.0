@@ -1,29 +1,9 @@
-#ifndef  INTERRUPT_H
-#define INTERRUPT_H
+#include "callbacks.h"
 
-#include "interrupt.h"
-#include "adc.h"
-#include "can.h"
-#include "can_functions.h"
-#include "fsm.h"
-#include "hvcb.h"
-#include "main.h"
-#include "mcb.h"
-#include "nlg5_database_can.h"
-#include "ntc.h"
-#include "stdbool.h"
-#include "stdio.h"
-#include "string.h"
-#include "tim.h"
-#include "usart.h"
-#include "scarrellino_fsm.h"
-#include "ECU_level_functions.h"
-#include "I2C_LCD.h"
-
-
-
-
-volatile bool        ADC_conv_flag = 0;
+/**
+ * @brief Position of the encoder knob
+ */
+volatile uint8_t knob_position = 0;
 
 bool volatile extern fungo_pressed;
 bool volatile extern ChargeEN_risingedge;
@@ -32,20 +12,11 @@ bool volatile extern ChargeEN_fallingedge;
 extern volatile Rx_CAN_Typedef hcan_rx[can_message_rx_number];
 
 
-
-/**
- * @brief IRQ of the ADC 
- */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-    
-    ADC_IRQ();
-    
-}
-
 /**
  * @brief callback degli errori con relativi messaggi
  */ 
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+  
     
     uint32_t e = hcan->ErrorCode;
 
@@ -102,7 +73,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim) {
 
     if (htim->Instance == TIM3) {
         
-        encoder_IRQ();
+        knob_position = encoder_IRQ(htim);
         
     }
 }
@@ -121,7 +92,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim) {
     
     if (htim->Instance == TIM4) {
         tim4_count += adc_timer_value;
-        __HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_4, tim4_count);
+        __HAL_TIM_SetCompare(htim, TIM_CHANNEL_4, tim4_count);
     }
 }
 
@@ -200,8 +171,6 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c){
 }
 
 
-
-#endif
 
 
 

@@ -8,9 +8,7 @@
  * - Federico Carbone [federico.carbone.sc@gmail.com]
  */
 
-#include "fsm.h"
-
-#include "string.h"
+ #include "fsm.h"
 
 STMLIBS_StatusTypeDef FSM_init(FSM_HandleTypeDef *handle,
                                FSM_ConfigTypeDef *config,
@@ -99,6 +97,10 @@ STMLIBS_StatusTypeDef _FSM_transition(FSM_HandleTypeDef *handle, uint32_t state)
 
 STMLIBS_StatusTypeDef FSM_routine(FSM_HandleTypeDef *handle) {
     if (handle == NULL) {
+        return STMLIBS_ERROR;
+    }
+
+    if(handle->current_state >= handle->config->state_length){
         return STMLIBS_ERROR;
     }
 

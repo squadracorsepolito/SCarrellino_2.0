@@ -10,12 +10,11 @@
  *
  */
 
-#include "I2C_LCD.h"
-#include "I2C_LCD_cfg.h"
-#include "Util.h"
-#include "stdio.h"
-#include "string.h"
-
+ #include "I2C_LCD.h"
+ #include "I2C_LCD_cfg.h"
+ #include "Util.h"
+ #include "stdio.h"
+ #include "string.h"
 extern uint8_t raw;                                                             //aggiunto da me
 
 

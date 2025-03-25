@@ -1,7 +1,8 @@
-#include "main.h" 
+#include "main.h"
+
+#include "stmlibs_status.h"
 #include "SW_Watchdog_V2.0.h"
-#include "string.h"
-#include "stdio.h"
+
 
 #ifndef __weak
 #define __weak __attribute__((weak))
@@ -48,16 +49,12 @@ static STMLIBS_StatusTypeDef SW_Watchdog_start(SW_Watchdog_HandleTypedef *handle
 
     uint32_t time = HAL_GetTick();
 
-    if(handle == NULL){
+    if(handle == NULL || (handle->last_refresh_time != 0U)){
         return STMLIBS_ERROR;
     }
 
-    if(handle->last_refresh_time == 0){
-        handle->last_refresh_time = time;
-        return STMLIBS_OK;
-    }
-
-    return STMLIBS_ERROR;
+    handle->last_refresh_time = time;
+    return STMLIBS_OK;
 
 }
 
@@ -70,12 +67,12 @@ static STMLIBS_StatusTypeDef SW_Watchdog_refresh(SW_Watchdog_HandleTypedef *hand
         return STMLIBS_ERROR;
     }
 
-    if(handle->last_refresh_time != 0){
-        handle->last_refresh_time = time;
-        return STMLIBS_OK;
+    if(handle->last_refresh_time == 0U){  
+        return STMLIBS_ERROR;
     }
-
-    return STMLIBS_ERROR;
+    
+    handle->last_refresh_time = time;
+    return STMLIBS_OK;
 
 
 }

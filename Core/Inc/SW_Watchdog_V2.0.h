@@ -1,14 +1,12 @@
 #ifndef  SW_WATCHDOG_V2_H
 #define  SW_WATCHDOG_V2_H
 
-
 #include "main.h"
 #include "stmlibs_status.h"
 #include "stdio.h"
 
-#define number_of_watchdogs 7U
+#define number_of_watchdogs 6U
 
-#pragma once
 /**
  * @param timeout_true timeout has occurred
  * @param timeout_false timeout has not occurred
@@ -18,15 +16,17 @@ typedef enum timeout_struct {
     timeout_false = 0U
 } Timeout_Typedef;
 
+/**
+ * @brief Watchdog handle array
+ * @note Time in millisecond
+ */
 typedef struct SW_Watchdog SW_Watchdog_HandleTypedef;
 
 typedef STMLIBS_StatusTypeDef(*SW_Watchdog_function)(SW_Watchdog_HandleTypedef *handle);
 
 
 
-/**
- * @brief Struct to store the data about the Watchdog, time in millisecond
- */
+
 struct SW_Watchdog
 {
 

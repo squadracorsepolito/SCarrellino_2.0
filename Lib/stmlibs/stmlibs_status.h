@@ -1,6 +1,10 @@
 #ifndef STMLIBS_STATUS_H
 #define STMLIBS_STATUS_H
 
+#ifndef NaN
+#define NaN -1
+#endif
+
 typedef enum {
     STMLIBS_OK      = 0x00U,
     STMLIBS_ERROR   = 0x01U,

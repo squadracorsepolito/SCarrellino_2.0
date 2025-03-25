@@ -31,13 +31,16 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+//#include "I2C_LCD.h"
+//#include "can_functions.h"
+//#include "tim.h"
+//#include "SW_Watchdog_V2.0.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
-
+#include "tim.h"
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -47,7 +50,6 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -55,8 +57,6 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
-//cambia da PC3 a PA2 in definitivo
-//16 = 4 positions allowed * 4 ticks every movement
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -124,19 +124,18 @@ void Error_Handler(void);
  * @defgroup Code section enables
  * @brief Enables/disables some parts of the code
  * @note Comment if you want to disable that part of the code
- * @file main.h
  */
 
 #define Watchdog
 #define TEMP_CHECK_EN
 #define air
-#define SOC_evaluation
-//#define Display
-
+#define can_error
+#define Display
 //
-#define MCB_CAN_HANDLE hcan2
-#define HVCB_CAN_HANDLE hcan1
 
+
+
+#define NaN -1
 
 
 #define SDC_active 1
@@ -156,27 +155,41 @@ void Error_Handler(void);
 #define watch_dog_error 7
 #define can_send_error 8
 
+
+/**
+ * @defgroup Charge LEDs functions wrapper
+ */
  #define ChargeEN()            HAL_GPIO_ReadPin(CH_EN_BUTTON_GPIO_IN_GPIO_Port, CH_EN_BUTTON_GPIO_IN_Pin) 
  #define ChargeBlueLedOn()     HAL_GPIO_WritePin(STAT2_LED_GPIO_OUT_GPIO_Port, STAT2_LED_GPIO_OUT_Pin, 1)
  #define ChargeBlueLedOff()   HAL_GPIO_WritePin(STAT2_LED_GPIO_OUT_GPIO_Port, STAT2_LED_GPIO_OUT_Pin, 0)
  #define ChargeENcmdON()       HAL_GPIO_WritePin(CH_EN_CMD_GPIO_OUT_GPIO_Port, CH_EN_CMD_GPIO_OUT_Pin, 0)
  #define ChargeENcmdState()    HAL_GPIO_ReadPin(CH_EN_CMD_GPIO_OUT_GPIO_Port, CH_EN_CMD_GPIO_OUT_Pin)
  #define ChargeENcmdOFF()    HAL_GPIO_WritePin(CH_EN_CMD_GPIO_OUT_GPIO_Port, CH_EN_CMD_GPIO_OUT_Pin, 1)
+ //
+ 
  #define ON 0
 
+/**
+ * @defgroup TSAC fan defines
+ */
+ #define half_power 65535/2
+ #define off 65535u
+ #define full_power 0
+ #define TSAC_fan_on()  HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2)
+ #define TSAC_fan_off() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, off)
+ #define TSAC_fan_half() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, half_power)
+ #define TSAC_fan_max() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, full_power)
 
+//
+
+
+/**
+ * @defgroup Buzzer defines and functions
+ */
 #define _800hz 1249u
 #define _1khz 999u
 #define _12khz 832u
-#define half_power 65535/2
-#define off 65535u
-#define full_power 0
-#define TSAC_fan_on()  HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2)
-#define TSAC_fan_off() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, off)
-#define TSAC_fan_half() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, half_power)
-#define TSAC_fan_max() __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_2, full_power)
 #define buzzer_on()   HAL_TIMEx_PWMN_Start(&htim8 ,TIM_CHANNEL_2);
-
 
 #define buzzer_800hz()                                              \
         do{                                             \
@@ -196,22 +209,34 @@ void Error_Handler(void);
                     __HAL_TIM_SET_COMPARE(&htim8,TIM_CHANNEL_2, (_12khz + 1)/2); \
                 }while (0)
                 
-                
 #define buzzer_off()  HAL_TIMEx_PWMN_Stop(&htim8 ,TIM_CHANNEL_2);
 
+//
 
+
+/**
+ * @defgroup IMS and AMS errors LED wrappers
+ */
 #define IMD_err_on()  HAL_GPIO_WritePin(IMD_DRIVER_GPIO_OUT_GPIO_Port, IMD_DRIVER_GPIO_OUT_Pin, 1)
 #define AMS_err_on()  HAL_GPIO_WritePin(AMS_DRIVER_GPIO_OUT_GPIO_Port, AMS_DRIVER_GPIO_OUT_Pin, 1)
 #define IMD_err_off() HAL_GPIO_WritePin(IMD_DRIVER_GPIO_OUT_GPIO_Port, IMD_DRIVER_GPIO_OUT_Pin, 0)
 #define AMS_err_off() HAL_GPIO_WritePin(AMS_DRIVER_GPIO_OUT_GPIO_Port, AMS_DRIVER_GPIO_OUT_Pin, 0)
 
+//
+
 #define SDC_FUNGO() HAL_GPIO_ReadPin(SDC_FUNGO_GPIO_IN_GPIO_Port, SDC_FUNGO_GPIO_IN_Pin)
 
+
+/**
+ * @defgroup LEDs functions wrapper
+ * @note Charge ones excluded 
+ */
 #define Stat2LedOn()  HAL_GPIO_WritePin(STAT2_LED_GPIO_OUT_GPIO_Port, STAT2_LED_GPIO_OUT_Pin, 1)
 #define Stat2LedOff() HAL_GPIO_WritePin(STAT2_LED_GPIO_OUT_GPIO_Port, STAT2_LED_GPIO_OUT_Pin, 0)
 
 #define Stat1LedOn()  HAL_GPIO_WritePin(STAT1_LED_GPIO_OUT_GPIO_Port, STAT1_LED_GPIO_OUT_Pin, 1)
 #define Stat1LedOff() HAL_GPIO_WritePin(STAT1_LED_GPIO_OUT_GPIO_Port, STAT1_LED_GPIO_OUT_Pin, 0)
+#define Stat1LedTogg() HAL_GPIO_TogglePin(STAT1_LED_GPIO_OUT_GPIO_Port, STAT1_LED_GPIO_OUT_Pin)
 
 #define Stat3LedOn()  HAL_GPIO_WritePin(STAT3_LED_GPIO_OUT_GPIO_Port, STAT3_LED_GPIO_OUT_Pin, 1)
 #define Stat3LedOff() HAL_GPIO_WritePin(STAT3_LED_GPIO_OUT_GPIO_Port, STAT3_LED_GPIO_OUT_Pin, 0)
@@ -222,8 +247,21 @@ void Error_Handler(void);
 #define ErrLedOn()   HAL_GPIO_WritePin(ERR_LED_GPIO_OUT_GPIO_Port, ERR_LED_GPIO_OUT_Pin, 1)
 #define ErrnLedOff()  HAL_GPIO_WritePin(ERR_LED_GPIO_OUT_GPIO_Port, ERR_LED_GPIO_OUT_Pin, 0)
 
+//
 
 
+
+/**
+ * @defgroup Error array defines 
+ */
+
+#define SOC_ 0
+#define CAN_send_ 1
+#define Watchdog_ 2
+#define Display_ 3
+#define Temperature_ 4
+
+#define number_of_errors 5
 
 
 
