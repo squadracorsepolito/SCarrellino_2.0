@@ -23,6 +23,7 @@ enum FSM_SCARRELLINO_FSM_StateEnum {
     FSM_SCARRELLINO_FSM_TSON,
     FSM_SCARRELLINO_FSM_CHARGE,
     FSM_SCARRELLINO_FSM_STOP_CHARGE,
+    FSM_SCARRELLINO_FSM_FAULT_LOCKOUT,
     _FSM_SCARRELLINO_FSM_STATE_COUNT,
     _FSM_SCARRELLINO_FSM_DIE /** @brief Invalid state, leads to irrecoverable error i.e. hard fault */
 
@@ -154,6 +155,33 @@ FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_STOP_CHARGE_do_work();
  * @param handle FSM handle
  */
 void FSM_SCARRELLINO_FSM_STOP_CHARGE_exit();
+
+/**
+ * @brief
+ * @param handle FSM handle
+ * @param event event
+ * @return next state
+ */
+FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle(uint8_t event);
+
+/**
+ * @brief
+ * @param handle FSM handle
+ */
+void FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_entry();
+
+/**
+ * @brief
+ * @param handle FSM handle
+ * @return next state
+ */
+FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work();
+
+/**
+ * @brief
+ * @param handle FSM handle
+ */
+void FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_exit();
 
 #endif // FSM_SCARRELLINO_FSM_H
 
