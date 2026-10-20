@@ -78,6 +78,9 @@ uint32_t _FSM_SCARRELLINO_FSM_CHARGE_do_work();
 uint32_t _FSM_SCARRELLINO_FSM_STOP_CHARGE_event_handle(uint8_t event);
 uint32_t _FSM_SCARRELLINO_FSM_STOP_CHARGE_do_work();
 
+uint32_t _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle(uint8_t event);
+uint32_t _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work();
+
 FSM_StateTypeDef state_table[_FSM_SCARRELLINO_FSM_STATE_COUNT] = {
     [FSM_SCARRELLINO_FSM_IDLE] =
         {
@@ -105,6 +108,12 @@ FSM_StateTypeDef state_table[_FSM_SCARRELLINO_FSM_STATE_COUNT] = {
         .entry         = FSM_SCARRELLINO_FSM_STOP_CHARGE_entry,
         .do_work       = _FSM_SCARRELLINO_FSM_STOP_CHARGE_do_work,
         .exit          = FSM_SCARRELLINO_FSM_STOP_CHARGE_exit,
+    },
+    [FSM_SCARRELLINO_FSM_FAULT_LOCKOUT] = {
+        .event_handler  = _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle,
+        .entry          = FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_entry,
+        .do_work        = _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work,
+        .exit           = FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_exit,
     }};
 
 FSM_ConfigTypeDef config = {
@@ -279,6 +288,7 @@ uint32_t _FSM_SCARRELLINO_FSM_TSON_event_handle(uint8_t event) {
     switch (next) {
         case FSM_SCARRELLINO_FSM_TSON:
         case FSM_SCARRELLINO_FSM_IDLE:
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
             return next;
         default:
             return _FSM_SCARRELLINO_FSM_DIE;
@@ -332,6 +342,9 @@ FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_TSON_do_work() {
         // Go to CHARGE
         next = FSM_SCARRELLINO_FSM_CHARGE;
     }
+    else if (!SDC_isactive(&variables) || (variables.ams_err_is_active == 1) || (variables.imd_err_is_active == 1)) {
+        next = FSM_SCARRELLINO_FSM_FAULT_LOCKOUT;
+    }
     // If we found AMS/IMD errors or the SDC opens or some implausibility
     else if ((variables.ams_err_is_active == 1) || (variables.imd_err_is_active == 1) || !SDC_isactive(&variables) ||
 #ifdef IMP_EN
@@ -349,6 +362,7 @@ FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_TSON_do_work() {
     switch (next) {
             case FSM_SCARRELLINO_FSM_TSON:
             case FSM_SCARRELLINO_FSM_IDLE:
+            case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
             case FSM_SCARRELLINO_FSM_CHARGE:
                 return next;
             default:
@@ -363,6 +377,7 @@ uint32_t _FSM_SCARRELLINO_FSM_TSON_do_work() {
     switch (next) {
         case FSM_SCARRELLINO_FSM_TSON:
         case FSM_SCARRELLINO_FSM_IDLE:
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
         case FSM_SCARRELLINO_FSM_CHARGE:
             return next;
         default:
@@ -376,6 +391,7 @@ uint32_t _FSM_SCARRELLINO_FSM_CHARGE_event_handle(uint8_t event) {
 
     switch (next) {
         case FSM_SCARRELLINO_FSM_CHARGE:
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
         case FSM_SCARRELLINO_FSM_STOP_CHARGE:
             return next;
         default:
@@ -423,9 +439,10 @@ FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_CHARGE_do_work() {
     // ###################################### TRNASITION FUNCTION for this state
     // Set default state if nothing changes
     uint32_t next = FSM_SCARRELLINO_FSM_CHARGE;
-
-    if ((variables.ams_err_is_active == 1) || (variables.imd_err_is_active == 1) ||  // If we found AMS/IMD errors
-        !SDC_isactive(&variables) ||                                       // or the SDC opens
+    if (!SDC_isactive(&variables) || (variables.ams_err_is_active == 1) || (variables.imd_err_is_active == 1)) {
+        next = FSM_SCARRELLINO_FSM_FAULT_LOCKOUT;
+    }
+    else if (                                       // or the SDC opens
 #ifdef IMP_EN
         (variables.imp_dcbus_is_active == 1) || (variables.imp_hv_relays_signals_is_active == 1) ||
         (variables.imp_any_is_active == 0) ||  // or implausibility
@@ -439,6 +456,7 @@ FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_CHARGE_do_work() {
     switch (next) {
         case FSM_SCARRELLINO_FSM_CHARGE:
         case FSM_SCARRELLINO_FSM_STOP_CHARGE:
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
             return next;
         default:
             return _FSM_SCARRELLINO_FSM_DIE;
@@ -452,6 +470,7 @@ uint32_t _FSM_SCARRELLINO_FSM_CHARGE_do_work() {
     switch (next) {
         case FSM_SCARRELLINO_FSM_CHARGE:
         case FSM_SCARRELLINO_FSM_STOP_CHARGE:
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
             return next;
         default:
             return _FSM_SCARRELLINO_FSM_DIE;
@@ -532,3 +551,62 @@ void FSM_SCARRELLINO_FSM_STOP_CHARGE_exit() {
     buzzer_stop_charge_on = 1;
 }
 
+
+/** @brief wrapper of FSM_SCARRELLINO_FSM_event_handle, with exit state checking */
+uint32_t _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle(uint8_t event) {
+    uint32_t next = (uint32_t)FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle(event);
+    switch (next) {
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
+        case FSM_SCARRELLINO_FSM_IDLE:
+            return next;
+        default:
+            return _FSM_SCARRELLINO_FSM_DIE;
+    }
+}
+
+FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_event_handle(uint8_t event) {
+    return FSM_SCARRELLINO_FSM_FAULT_LOCKOUT;
+}
+
+void FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_entry() {
+    HAL_GPIO_WritePin(ERR_LED_GPIO_OUT_GPIO_Port, ERR_LED_GPIO_OUT_Pin, GPIO_PIN_SET);
+}
+
+void FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_exit() {
+    HAL_GPIO_WritePin(ERR_LED_GPIO_OUT_GPIO_Port, ERR_LED_GPIO_OUT_Pin, GPIO_PIN_RESET);
+}
+
+/** @brief wrapper of FSM_SCARRELLINO_FSM_do_work, with exit state checking */
+uint32_t _FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work() {
+    uint32_t next = (uint32_t)FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work();
+    switch (next) {
+        case FSM_SCARRELLINO_FSM_FAULT_LOCKOUT:
+        case FSM_SCARRELLINO_FSM_IDLE:
+            return next;
+        default:
+            return _FSM_SCARRELLINO_FSM_DIE;
+    }
+}
+
+FSM_SCARRELLINO_FSM_StateTypeDef FSM_SCARRELLINO_FSM_FAULT_LOCKOUT_do_work() {
+    VariableSaving(&variables);
+
+    #ifdef air
+    AIR_CAN_Cmd = 0; 
+    #else
+    AIR_CAN_Cmd = 0;
+    #endif
+    
+    ChargeENcmdOFF();
+    ChargeBlueLedOff();
+
+    uint32_t next = FSM_SCARRELLINO_FSM_FAULT_LOCKOUT;
+
+    bool reset_pressed = (HAL_GPIO_ReadPin(ENCODER_SW_GPIO_IN_GPIO_Port, ENCODER_SW_GPIO_IN_Pin) == GPIO_PIN_RESET);
+    
+    if (SDC_isactive(&variables) && reset_pressed) {
+        next = FSM_SCARRELLINO_FSM_IDLE; 
+    }
+
+    return next;
+}
